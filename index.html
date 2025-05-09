@@ -17,7 +17,6 @@
     <script type="module" src="demo.js"></script>
 
     <style>
-        /* Pastel Blue Theme */
         body {
             font-family: Arial, sans-serif;
             text-align: center;
@@ -52,7 +51,7 @@
             width: 95%;
             max-width: 900px;
             margin: 20px auto;
-            height: 350px; /* Increased height for better graph visibility */
+            height: 350px;
             background: #ffffff;
             padding: 15px;
             border-radius: 12px;
@@ -86,10 +85,6 @@
         <h2>Current</h2>
         <p id="current">-- A</p>
     </div>
-    <div class="sensor-box">
-        <h2>Power</h2>
-        <p id="power">-- W</p>
-    </div>
 </div>
 
 <div class="sensor-container">
@@ -104,9 +99,6 @@
 <!-- Charts for data visualization -->
 <div class="chart-container">
     <canvas id="voltageCurrentChart"></canvas>
-</div>
-<div class="chart-container">
-    <canvas id="powerChart"></canvas>
 </div>
 
 </body>
