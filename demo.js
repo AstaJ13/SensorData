@@ -15,37 +15,37 @@ const database = firebase.database();
 const sensorRef = database.ref("sensorData");
 
 document.addEventListener("DOMContentLoaded", function () {
-    const tempElement = document.getElementById("temperature");
-    const humidityElement = document.getElementById("humidity");
-    const airQualityElement = document.getElementById("airQuality");
+    const voltageElement = document.getElementById("voltage");
+    const currentElement = document.getElementById("current");
+    const powerElement = document.getElementById("power");
     const lastUpdatedElement = document.getElementById("lastUpdated");
 
     // Chart.js Data Arrays
     let labels = [];
-    let tempData = [];
-    let humidityData = [];
-    let airQualityData = [];
+    let voltageData = [];
+    let currentData = [];
+    let powerData = [];
     const maxDataPoints = 10;
 
     // Initialize Charts
-    const tempHumidityCtx = document.getElementById("tempHumidityChart").getContext("2d");
-    const airQualityCtx = document.getElementById("airQualityChart").getContext("2d");
+    const voltageCurrentCtx = document.getElementById("voltageCurrentChart").getContext("2d");
+    const powerCtx = document.getElementById("powerChart").getContext("2d");
 
-    const tempHumidityChart = new Chart(tempHumidityCtx, {
+    const voltageCurrentChart = new Chart(voltageCurrentCtx, {
         type: "line",
         data: {
             labels: labels,
             datasets: [
                 {
-                    label: "Temperature (°C)",
-                    data: tempData,
+                    label: "Voltage (V)",
+                    data: voltageData,
                     borderColor: "red",
                     borderWidth: 2,
                     fill: false
                 },
                 {
-                    label: "Humidity (%)",
-                    data: humidityData,
+                    label: "Current (A)",
+                    data: currentData,
                     borderColor: "blue",
                     borderWidth: 2,
                     fill: false
@@ -62,14 +62,14 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    const airQualityChart = new Chart(airQualityCtx, {
+    const powerChart = new Chart(powerCtx, {
         type: "line",
         data: {
             labels: labels,
             datasets: [
                 {
-                    label: "Air Quality (PPM)",
-                    data: airQualityData,
+                    label: "Power (W)",
+                    data: powerData,
                     borderColor: "green",
                     borderWidth: 2,
                     fill: false
@@ -81,33 +81,33 @@ document.addEventListener("DOMContentLoaded", function () {
             maintainAspectRatio: false,
             scales: {
                 x: { title: { display: true, text: "Time" } },
-                y: { title: { display: true, text: "PPM" } }
+                y: { title: { display: true, text: "W" } }
             }
         }
     });
 
     // Function to update UI and Graphs
-    function updateUI(temperature, humidity, airQuality) {
-        tempElement.textContent = temperature !== null ? `${temperature} °C` : "-- °C";
-        humidityElement.textContent = humidity !== null ? `${humidity} %` : "-- %";
-        airQualityElement.textContent = airQuality !== null ? `${airQuality} PPM` : "-- PPM";
+    function updateUI(voltage, current, power) {
+        voltageElement.textContent = voltage !== null ? `${voltage} V` : "-- V";
+        currentElement.textContent = current !== null ? `${current} A` : "-- A";
+        powerElement.textContent = power !== null ? `${power} W` : "-- W";
         lastUpdatedElement.textContent = `Last Updated: ${new Date().toLocaleTimeString()}`;
 
         // Update Graph Data
         if (labels.length >= maxDataPoints) {
             labels.shift();
-            tempData.shift();
-            humidityData.shift();
-            airQualityData.shift();
+            voltageData.shift();
+            currentData.shift();
+            powerData.shift();
         }
 
         labels.push(new Date().toLocaleTimeString());
-        tempData.push(temperature);
-        humidityData.push(humidity);
-        airQualityData.push(airQuality);
+        voltageData.push(voltage);
+        currentData.push(current);
+        powerData.push(power);
 
-        tempHumidityChart.update();
-        airQualityChart.update();
+        voltageCurrentChart.update();
+        powerChart.update();
     }
 
     // Listen for data updates
@@ -116,20 +116,24 @@ document.addEventListener("DOMContentLoaded", function () {
             let data = snapshot.val();
             console.log("📡 Live Data from Firebase:", data);
 
-            let temperature = null, humidity = null, airQuality = null;
+            let voltage = null, current = null, power = null;
 
-            if (typeof data === "number") {
-                temperature = data; // Assume it's a temperature reading
-            } else if (typeof data === "object") {
-                temperature = parseFloat(data.temperature) || null;
-                humidity = parseFloat(data.humidity) || null;
-                airQuality = parseFloat(data.airQuality) || null;
+            if (typeof data === "object") {
+                voltage = parseFloat(data.voltage) || null;
+                current = parseFloat(data.current) || null;
+
+                // Calculate power as Voltage * Current (if both are available)
+                if (voltage !== null && current !== null) {
+                    power = voltage * current;
+                } else {
+                    power = null;
+                }
             } else {
                 console.warn("⚠️ Invalid sensor data received. Skipping update.");
                 return;
             }
 
-            updateUI(temperature, humidity, airQuality);
+            updateUI(voltage, current, power);
         } else {
             console.warn("⚠️ No data found in Firebase.");
         }
