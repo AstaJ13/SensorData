@@ -9,7 +9,6 @@ const firebaseConfig = {
     appId: "1:186999672140:web:94af4274408dea2672d3e9",
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 const sensorRef = database.ref("sensorData");
@@ -17,19 +16,16 @@ const sensorRef = database.ref("sensorData");
 document.addEventListener("DOMContentLoaded", function () {
     const voltageElement = document.getElementById("voltage");
     const currentElement = document.getElementById("current");
-    const powerElement = document.getElementById("power");
+    const airQualityElement = document.getElementById("airQuality");
     const lastUpdatedElement = document.getElementById("lastUpdated");
 
-    // Chart.js Data Arrays
     let labels = [];
     let voltageData = [];
     let currentData = [];
-    let powerData = [];
+    let airQualityData = [];
     const maxDataPoints = 10;
 
-    // Initialize Charts
     const voltageCurrentCtx = document.getElementById("voltageCurrentChart").getContext("2d");
-    const powerCtx = document.getElementById("powerChart").getContext("2d");
 
     const voltageCurrentChart = new Chart(voltageCurrentCtx, {
         type: "line",
@@ -49,6 +45,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     borderColor: "blue",
                     borderWidth: 2,
                     fill: false
+                },
+                {
+                    label: "Air Quality (PPM)",
+                    data: airQualityData,
+                    borderColor: "purple",
+                    borderWidth: 2,
+                    fill: false
                 }
             ]
         },
@@ -62,78 +65,35 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    const powerChart = new Chart(powerCtx, {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: "Power (W)",
-                    data: powerData,
-                    borderColor: "green",
-                    borderWidth: 2,
-                    fill: false
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { title: { display: true, text: "Time" } },
-                y: { title: { display: true, text: "W" } }
-            }
-        }
-    });
-
-    // Function to update UI and Graphs
-    function updateUI(voltage, current, power) {
+    function updateUI(voltage, current, airQuality) {
         voltageElement.textContent = voltage !== null ? `${voltage} V` : "-- V";
         currentElement.textContent = current !== null ? `${current} A` : "-- A";
-        powerElement.textContent = power !== null ? `${power} W` : "-- W";
+        airQualityElement.textContent = airQuality !== null ? `${airQuality} PPM` : "-- PPM";
         lastUpdatedElement.textContent = `Last Updated: ${new Date().toLocaleTimeString()}`;
 
-        // Update Graph Data
         if (labels.length >= maxDataPoints) {
             labels.shift();
             voltageData.shift();
             currentData.shift();
-            powerData.shift();
+            airQualityData.shift();
         }
 
         labels.push(new Date().toLocaleTimeString());
         voltageData.push(voltage);
         currentData.push(current);
-        powerData.push(power);
+        airQualityData.push(airQuality);
 
         voltageCurrentChart.update();
-        powerChart.update();
     }
 
-    // Listen for data updates
     sensorRef.on("value", function (snapshot) {
         if (snapshot.exists()) {
-            let data = snapshot.val();
-            console.log("📡 Live Data from Firebase:", data);
+            const data = snapshot.val();
+            let voltage = parseFloat(data.voltage) || null;
+            let current = parseFloat(data.current) || null;
+            let airQuality = parseFloat(data.airQuality) || null;
 
-            let voltage = null, current = null, power = null;
-
-            if (typeof data === "object") {
-                voltage = parseFloat(data.voltage) || null;
-                current = parseFloat(data.current) || null;
-
-                // Calculate power as Voltage * Current (if both are available)
-                if (voltage !== null && current !== null) {
-                    power = voltage * current;
-                } else {
-                    power = null;
-                }
-            } else {
-                console.warn("⚠️ Invalid sensor data received. Skipping update.");
-                return;
-            }
-
-            updateUI(voltage, current, power);
+            updateUI(voltage, current, airQuality);
         } else {
             console.warn("⚠️ No data found in Firebase.");
         }
